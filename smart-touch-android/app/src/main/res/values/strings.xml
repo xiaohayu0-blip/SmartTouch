@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmartTouch</string>
+    <string name="accessibility_service_description">
+        SmartTouch无障碍服务，用于接收和执行自动化操作指令（点击、滑动、输入、截图）
+    </string>
+</resources>

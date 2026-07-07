@@ -1,0 +1,36 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.smarttouch'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.smarttouch"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // OkHttp WebSocket（轻量替代Netty）
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    // JSON解析
+    implementation 'org.json:json:20231013'
+}
