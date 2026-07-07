@@ -1,0 +1,88 @@
+# ==================== SmartTouch 主配置 ====================
+# 敏感信息通过环境变量注入，本地开发使用 .env 文件
+server:
+  port: 8080
+
+spring:
+  application:
+    name: smart-touch-server
+
+  # ==================== 数据源配置 ====================
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/smart_touch?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # HikariCP 连接池（Spring Boot默认）
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 30000
+
+  # ==================== Redis 配置 ====================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 4
+          max-wait: 3000ms
+
+  # ==================== JSON 序列化配置 ====================
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+
+# ==================== LangChain4j AI模型配置 ====================
+langchain4j:
+  openai:
+    # API密钥（支持DeepSeek/Qwen/智谱等OpenAI兼容接口）
+    api-key: ${LLM_API_KEY}
+    # API地址（默认为DeepSeek，可根据实际使用的模型供应商修改）
+    base-url: ${LLM_BASE_URL:https://api.deepseek.com/v1}
+    # 文本推理模型
+    model-name: ${LLM_MODEL:deepseek-chat}
+    # 视觉理解模型（多模态，用于截图分析）
+    vision-model: ${VISION_MODEL:qwen-vl-max}
+
+# ==================== SmartTouch 业务配置 ====================
+smart-touch:
+  agent:
+    max-steps: 30               # 单任务最大执行步数，防止死循环
+    context-window: 10          # 上下文保留最近N步摘要
+    step-timeout: 30s           # 单步指令下发超时时间
+    heartbeat-interval: 15s     # 设备心跳间隔
+    heartbeat-miss-threshold: 3 # 连续N次无心跳标记离线
+  mcp:
+    enabled: false              # MCP Server开关（Phase 4启用）
+    port: 8081
+
+# ==================== MyBatis-Plus 配置 ====================
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.smarttouch.entity
+  configuration:
+    map-underscore-to-camel-case: true  # 下划线转驼峰
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 开发环境打印SQL
+  global-config:
+    db-config:
+      id-type: auto                     # 主键自增
+      logic-delete-field: deleted       # 逻辑删除字段
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# ==================== 日志配置 ====================
+logging:
+  level:
+    com.smarttouch: debug
+    com.baomidou.mybatisplus: debug
+    org.springframework.web.socket: debug

@@ -1,0 +1,28 @@
+# ==================== SmartTouch 开发环境配置 ====================
+# 启动时指定：--spring.profiles.active=dev
+
+spring:
+  datasource:
+    # 开发环境可使用本地MySQL
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/smart_touch?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+# 开发环境日志更详细
+logging:
+  level:
+    com.smarttouch: debug
+    com.baomidou.mybatisplus: debug
+    org.springframework.web.socket: trace
+    dev.langchain4j: debug
+
+# 开发环境关闭MCP
+smart-touch:
+  mcp:
+    enabled: false

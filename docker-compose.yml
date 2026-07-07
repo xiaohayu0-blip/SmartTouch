@@ -1,0 +1,95 @@
+# ==================== SmartTouch 一键部署编排 ====================
+# 使用方式：docker compose up -d
+# 包含：MySQL 8.0 + Redis 7 + SmartTouch Server
+
+version: "3.8"
+
+services:
+  # ==================== MySQL 8.0 ====================
+  mysql:
+    image: mysql:8.0
+    container_name: smart-touch-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:root}
+      MYSQL_DATABASE: smart_touch
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+      TZ: Asia/Shanghai
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次启动自动执行建表SQL
+      - ./docs/sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - smart-touch-net
+
+  # ==================== Redis 7 ====================
+  redis:
+    image: redis:7-alpine
+    container_name: smart-touch-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - smart-touch-net
+
+  # ==================== SmartTouch Server ====================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart-touch-server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # 数据库连接（容器内通过服务名访问）
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:root}
+      # Redis连接
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      # AI模型API（从环境变量或.env注入）
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com/v1}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+      VISION_MODEL: ${VISION_MODEL:-qwen-vl-max}
+      # JVM参数
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - smart-touch-net
+
+# ==================== 数据卷 ====================
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+
+# ==================== 网络 ====================
+networks:
+  smart-touch-net:
+    driver: bridge
